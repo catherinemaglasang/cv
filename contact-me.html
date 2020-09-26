@@ -1,26 +1,38 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-  <head>
-    <meta charset="utf-8">
-    <title>Contact Me</title>
-  </head>
-  <body>
-    <h1>My Contact Details</h1>
-    <p>Zone 19 Abuno Iligan City Philippines</p>
-    <p>09279703321</p>
-    <p>cbmaglasang@gmail.com</p>
 
-    <hr>
-    <form class="" action="mailto:cbmaglasang@gmail.com" method="post" enctype="text/plain">
-      <label> Your Name:</label>
-      <input type="text" name="yourName" value=""><br>
-      <label>Your Email:</label>
-      <input type="text" name="yourEmail" value=""><br>
-      <label>Your Message:</label><br>
-      <textarea name="yourMessage" rows="10" cols="30"></textarea><br>
-      <input type="submit" name="" value="Submit">
+<head>
+  <meta charset="utf-8">
+  <title>Contact Me</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300&family=Montserrat:wght@100;500&family=Nanum+Gothic+Coding&family=Sacramento&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
 
-    </form>
+<body>
+  <h1>My Contact Details</h1>
+  <p class="fa fa-address-card">  ZONE 19 ABUNO, ILIGAN CITY PHILIPPINES 9200</p>
+  <p>📱  +63 927 970 3321</p>
+  <p>📞  +63 222-0964</p>
+  <p class="fa fa-envelope"></p> cbmaglasang@gmail.com <br>
+  <p class="fa fa-skype"></p> catherinemaglasang12
 
-  </body>
+
+  <hr>
+  <br>
+  <br>
+  <form target="_blank" action="mailto:cbmaglasang@gmail.com" method="post" enctype="text/plain" name="myForm" onsubmit="return validateForm();">
+    <label> Your Name:</label>
+    <input type="text" name="Name" value=""><br><br>
+    <label>Your Email:</label>
+    <input type="text" id="Email" name="Email" value=""><br><br>
+    <label>Your Message:</label><br>
+    <textarea name="Message" rows="10" cols="30"></textarea><br><br>
+    <input class="button" type="submit" name="" value="SUBMIT">
+    <input class="button" type="reset" value="RESET">
+  </form>
+
+<script src="js/index.js" charset="utf-8"></script>
+</body>
+
 </html>
