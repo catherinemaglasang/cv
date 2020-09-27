@@ -1,6 +1,6 @@
 body {
   color: #393e46;
-  padding:20px 100px 20px;
+  padding:5px 150px 10px;
   font-family: Merriweather,serif;
   font-size: 12px;
 }
@@ -102,4 +102,13 @@ input[type=text] {
   color: white;
   background-color: #78909c;
   border: none;
+}
+.contact-me {
+  text-align: right;
+  color: #78909c;
+}
+
+.back-to-cv {
+  text-align: left;
+  color: #78909c;
 }
