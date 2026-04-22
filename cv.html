@@ -17,10 +17,35 @@
       font-size: 9.5pt;
     }
 
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      margin: 20px auto 0;
+      background: #1a1a1a;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background 0.2s;
+      max-width: 210mm;
+      display: block;
+      width: fit-content;
+    }
+    .back-btn:hover {
+      background: #333;
+    }
+    .back-btn::before {
+      content: '←';
+      font-size: 16px;
+    }
+
     .page {
       width: 210mm;
       min-height: 297mm;
-      margin: 20px auto;
+      margin: 10px auto 20px;
       background: #fff;
       padding: 32px 38px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.15);
@@ -147,6 +172,7 @@
     /* ── Print ── */
     @media print {
       body { background: #fff; }
+      .back-btn { display: none; }
       .page {
         margin: 0;
         padding: 24px 28px;
@@ -158,6 +184,8 @@
   </style>
 </head>
 <body>
+
+<a href="index.html" class="back-btn">Back to Home</a>
 
 <div class="page">
 
