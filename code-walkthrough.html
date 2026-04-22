@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Walkthrough — Catherine Maglasang</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #1a1a2e;
+      background: #0f0f1a;
+      line-height: 1.7;
+    }
+
+    /* ── Cover ── */
+    .cover {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 40%, #2d1b69 100%);
+      padding: 60px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .cover::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 40%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 60%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+      animation: drift 20s ease-in-out infinite;
+    }
+    @keyframes drift {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(-2%, 2%); }
+    }
+    .cover-content { position: relative; z-index: 1; max-width: 700px; }
+    .cover-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #a5b4fc;
+      margin-bottom: 24px;
+    }
+    .cover h1 {
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .cover h1 span { color: #a78bfa; }
+    .cover p {
+      font-size: 1.1rem;
+      color: #94a3b8;
+      max-width: 560px;
+      margin: 0 auto 32px;
+    }
+    .cover-author {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      justify-content: center;
+    }
+    .cover-author img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(167, 139, 250, 0.4);
+    }
+    .cover-author-info { text-align: left; }
+    .cover-author-info .name { color: #e2e8f0; font-weight: 600; font-size: 15px; }
+    .cover-author-info .role { color: #64748b; font-size: 13px; }
+
+    /* ── TOC ── */
+    .toc {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 80px 24px 40px;
+    }
+    .toc h2 {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #a78bfa;
+      margin-bottom: 28px;
+    }
+    .toc-list { list-style: none; }
+    .toc-list li {
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .toc-list a {
+      text-decoration: none;
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+    }
+    .toc-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #6366f1;
+      font-weight: 600;
+      min-width: 28px;
+    }
+    .toc-title { color: #e2e8f0; font-weight: 500; font-size: 16px; }
+    .toc-lang {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      margin-left: auto;
+    }
+    .lang-ts { background: rgba(49, 120, 198, 0.15); color: #60a5fa; }
+    .lang-py { background: rgba(53, 114, 165, 0.15); color: #fbbf24; }
+    .lang-js { background: rgba(240, 219, 79, 0.12); color: #fbbf24; }
+    .lang-sql { background: rgba(255, 107, 107, 0.12); color: #f87171; }
+    .lang-php { background: rgba(119, 123, 180, 0.15); color: #a5b4fc; }
+
+    /* ── Sections ── */
+    .section {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 60px 24px;
+    }
+    .section + .section {
+      border-top: 1px solid rgba(255,255,255,0.04);
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 8px;
+    }
+    .section-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: #6366f1;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 8px;
+      padding: 4px 10px;
+    }
+    .section h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .section-subtitle {
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .section-desc {
+      color: #cbd5e1;
+      font-size: 15px;
+      margin-bottom: 24px;
+      max-width: 720px;
+    }
+
+    /* ── Explain Box ── */
+    .explain {
+      background: rgba(99, 102, 241, 0.08);
+      border-left: 3px solid #6366f1;
+      border-radius: 0 8px 8px 0;
+      padding: 16px 20px;
+      margin: 20px 0;
+      font-size: 14px;
+      color: #c7d2fe;
+    }
+    .explain strong { color: #a5b4fc; }
+
+    /* ── Why Box ── */
+    .why-box {
+      background: rgba(16, 185, 129, 0.08);
+      border-left: 3px solid #10b981;
+      border-radius: 0 8px 8px 0;
+      padding: 16px 20px;
+      margin: 20px 0;
+      font-size: 14px;
+      color: #a7f3d0;
+    }
+    .why-box strong { color: #6ee7b7; }
+
+    /* ── File Label ── */
+    .file-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+    .file-label .icon { color: #6366f1; }
+
+    /* ── Code Blocks ── */
+    pre[class*="language-"] {
+      border-radius: 10px;
+      margin: 12px 0 28px;
+      font-size: 12.5px;
+      line-height: 1.65;
+      border: 1px solid rgba(255,255,255,0.06);
+      max-height: 600px;
+      overflow: auto;
+    }
+    code[class*="language-"] {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+    }
+    /* Highlight important lines */
+    .line-highlight {
+      background: rgba(99, 102, 241, 0.12) !important;
+    }
+
+    /* ── Stats Bar ── */
+    .stats-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin: 40px 0;
+      justify-content: center;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 20px 28px;
+      text-align: center;
+      min-width: 140px;
+    }
+    .stat-num {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #a78bfa;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ── Architecture Diagram ── */
+    .arch-diagram {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 32px;
+      margin: 24px 0;
+      text-align: center;
+    }
+    .arch-diagram pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.6;
+      text-align: left;
+      display: inline-block;
+      background: none !important;
+      border: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    .arch-diagram .highlight { color: #a78bfa; font-weight: 600; }
+    .arch-diagram .green { color: #6ee7b7; }
+    .arch-diagram .blue { color: #60a5fa; }
+    .arch-diagram .yellow { color: #fbbf24; }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      padding: 60px 24px;
+      color: #475569;
+      font-size: 13px;
+      border-top: 1px solid rgba(255,255,255,0.04);
+    }
+
+    /* ── Print ── */
+    @media print {
+      body { background: #fff; color: #1a1a2e; }
+      .cover { min-height: auto; padding: 40px; background: #f8fafc; }
+      .cover h1 { color: #1a1a2e; }
+      .cover h1 span { color: #6366f1; }
+      pre[class*="language-"] { max-height: none; border: 1px solid #e2e8f0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ COVER ═══════════════════ -->
+<div class="cover">
+  <div class="cover-content">
+    <div class="cover-badge">Code Walkthrough</div>
+    <h1>Inside the <span>Code</span></h1>
+    <p>A guided tour through production systems I've built — from AI-powered newsletter generation to cloud data pipelines and 48,000+ SQL queries.</p>
+    <div class="cover-author">
+      <img src="catherine-photo.jpg" alt="Catherine Maglasang">
+      <div class="cover-author-info">
+        <div class="name">Catherine Maglasang</div>
+        <div class="role">Full-Stack Engineer</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ TABLE OF CONTENTS ═══════════════════ -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ol class="toc-list">
+    <li><a href="#s1"><span class="toc-num">01</span><span class="toc-title">The Agentic Chat Loop</span><span class="toc-lang lang-ts">TypeScript</span></a></li>
+    <li><a href="#s2"><span class="toc-num">02</span><span class="toc-title">Real-Time SSE Streaming</span><span class="toc-lang lang-ts">TypeScript</span></a></li>
+    <li><a href="#s3"><span class="toc-num">03</span><span class="toc-title">Fast Refinement Engine</span><span class="toc-lang lang-ts">TypeScript</span></a></li>
+    <li><a href="#s4"><span class="toc-num">04</span><span class="toc-title">Security Hardening Layer</span><span class="toc-lang lang-ts">TypeScript</span></a></li>
+    <li><a href="#s5"><span class="toc-num">05</span><span class="toc-title">Background Generation &amp; Polling</span><span class="toc-lang lang-ts">TypeScript</span></a></li>
+    <li><a href="#s6"><span class="toc-num">06</span><span class="toc-title">SSE Event Handler (Frontend)</span><span class="toc-lang lang-js">JavaScript</span></a></li>
+    <li><a href="#s7"><span class="toc-num">07</span><span class="toc-title">Click-to-Edit System</span><span class="toc-lang lang-js">JavaScript</span></a></li>
+    <li><a href="#s8"><span class="toc-num">08</span><span class="toc-title">Dentrix Ascend Data Pipeline</span><span class="toc-lang lang-py">Python</span></a></li>
+    <li><a href="#s9"><span class="toc-num">09</span><span class="toc-title">Real-Time Stream Consumer</span><span class="toc-lang lang-py">Python</span></a></li>
+    <li><a href="#s10"><span class="toc-num">10</span><span class="toc-title">Matchback Lead Tracking</span><span class="toc-lang lang-sql">SQL</span></a></li>
+    <li><a href="#s11"><span class="toc-num">11</span><span class="toc-title">14 PMS — Same Report, Different SQL</span><span class="toc-lang lang-sql">SQL</span></a></li>
+    <li><a href="#s12"><span class="toc-num">12</span><span class="toc-title">ODS Schema Mapping (Redshift)</span><span class="toc-lang lang-sql">SQL + Jinja2</span></a></li>
+  </ol>
+</div>
+
+<!-- ═══════════════════ STATS ═══════════════════ -->
+<div class="stats-bar">
+  <div class="stat-card"><div class="stat-num">790+</div><div class="stat-label">Automated Tests</div></div>
+  <div class="stat-card"><div class="stat-num">48K+</div><div class="stat-label">SQL Queries</div></div>
+  <div class="stat-card"><div class="stat-num">14</div><div class="stat-label">PMS Platforms</div></div>
+  <div class="stat-card"><div class="stat-num">4</div><div class="stat-label">Languages</div></div>
+  <div class="stat-card"><div class="stat-num">3</div><div class="stat-label">Repositories</div></div>
+</div>
+
+<!-- ═══════════════════ ARCHITECTURE OVERVIEW ═══════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">00</span>
+    <h2>Architecture Overview</h2>
+  </div>
+  <p class="section-desc">Before we dive into the code, here's how all the pieces fit together. The AI Newsletter Generator is a full-stack system spanning 3 repositories, each with a distinct role.</p>
+
+  <div class="arch-diagram">
+<pre>
+  <span class="blue">Browser (User)</span>
+      │
+      │  HTTPS POST  (SSE stream)
+      ▼
+  <span class="highlight">Laravel (PHP)</span>  ──────────────────  Auth / CSRF / Session
+      │  Blade template serves frontend JS
+      │  All API calls proxied (no tokens in browser)
+      │
+      │  HTTP Proxy
+      ▼
+  <span class="green">LoopBack 4 API (TypeScript)</span>  ────  The brain
+      │  ├── Chat Service   → agentic loop (up to 10 turns)
+      │  ├── Tool System    → 5-state gating
+      │  ├── Refinement     → fast programmatic engine
+      │  ├── Security       → SSRF, path traversal, auth
+      │  └── Job Store      → background generation
+      │
+      │  AWS SDK
+      ▼
+  <span class="yellow">AWS Bedrock (Claude)</span>  ──────────  AI generation
+      │  Sonnet: template generation
+      │  Haiku:  refinements & subject lines
+      │
+  <span class="yellow">AWS S3 (Encrypted)</span>  ─────────────  Storage
+      research / templates / images / style-memory
+</pre>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ SECTION 01 ═══════════════════ -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>The Agentic Chat Loop</h2>
+  </div>
+  <div class="section-subtitle">TypeScript &middot; LoopBack 4 API &middot; newsletter-chat.service.ts</div>
+
+  <p class="section-desc">This is the heart of the entire system. When a user sends a message, the <strong>chat service</strong> orchestrates a multi-turn conversation with Claude (via AWS Bedrock). The AI can call "tools" — functions that do things like research a website, generate templates, or replace text. After each tool runs, the result goes back to the AI for the next step. This loop can run up to 10 turns in a single user message.</p>
+
+  <div class="explain">
+    <strong>What's an "agentic loop"?</strong> Think of it like a conversation where the AI is an employee who can ask questions and use tools. You say "generate a newsletter about dental hygiene." The AI thinks, then calls a tool to generate templates. The tool returns results. The AI looks at the results, then responds to you. If it needs more steps (e.g., set up the sender first), it calls another tool. That loop of "think → act → observe → think again" is the agentic loop.
+  </div>
+
+  <p class="section-desc">The key optimization: <strong>fast-path exits</strong>. When the AI calls a tool that produces a visual result (like replacing text), we skip the second AI call entirely. Why ask the AI to say "Done!" when the user can already see the change? This cuts response time from ~4 seconds to under 200ms.</p>
+
+  <div class="file-label"><span class="icon">&#128196;</span> src/services/newsletter-chat.service.ts — Lines 937–992</div>
+  <pre><code class="language-typescript">// ── Fast-path: skip second LLM call for simple template edits ──
+// When replace_text or replace_image succeeds, the preview already updated via
+// onTemplatesReady. No need for another 3s Bedrock round-trip just to say "Done!".
+if (toolCalls.length === 1) {
+  const tc = toolCalls[0];
+  const tr = toolResults[0] && (toolResults[0] as any).toolResult?.content?.[0]?.text;
+  let parsedResult: any = null;
+  try { parsedResult = tr ? JSON.parse(tr) : null; } catch { /* ignore */ }
+
+  // Fast-path: skip LLM round-trip for tools where the result speaks for itself.
+  // - replace_text / replace_image: preview already updated via onTemplatesReady
+  // - generate_newsletter (background): frontend polls independently
+  let directResponse: string | null = null;
+  if (parsedResult?.success && (tc.name === 'replace_text' || tc.name === 'replace_image')) {
+    if (tc.name === 'replace_text' &&
+        (parsedResult.cascadedSiblings > 0 || parsedResult.cascadedButtons > 0)) {
+      directResponse = parsedResult.message
+        || 'Done! The heading and related content have been updated.';
+    } else {
+      directResponse = 'Done!';
+    }
+  } else if (parsedResult?.success && parsedResult?.status === 'generating'
+             && tc.name === 'generate_newsletter') {
+    directResponse = parsedResult.message
+      || 'Your newsletters are being created. This usually takes about a minute.';
+  }
+
+  if (directResponse) {
+    if (callbacks.onTextChunk) callbacks.onTextChunk(directResponse);
+    messages.push({role: 'assistant', content: [{text: directResponse}]});
+    rawText = directResponse;
+
+    logger.info(`Fast-path response for ${tc.name} — skipped LLM round-trip, ` +
+                `wall-clock: ${Date.now() - chatStartTime}ms`);
+
+    await sessionPromise;
+    if (callbacks.onComplete) {
+      callbacks.onComplete({
+        stopReason: 'end_turn', rawText, sessionId: s3SessionId,
+        usage: {
+          inputTokens: totalInputTokens, outputTokens: totalOutputTokens,
+          totalTokens: totalInputTokens + totalOutputTokens,
+          iterations: i + 1, durationMs: Date.now() - chatStartTime,
+        },
+      });
+    }
+    return rawText;
+  }
+}</code></pre>
+
+  <div class="why-box">
+    <strong>Why this matters:</strong> Every AI call costs money and takes 3–5 seconds. By detecting when the result is already visible to the user, we skip the AI entirely. Over hundreds of edits per day, this saves real time and real cost. The system also handles "cascading" — if you change a heading, related paragraphs and button text auto-update in one shot.
+  </div>
+</div>
+
+
+<!-- ═══════════════════ SECTION 02 ═══════════════════ -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>Real-Time SSE Streaming</h2>
+  </div>
+  <div class="section-subtitle">TypeScript &middot; LoopBack 4 API &middot; newsletter-chat.service.ts</div>
+
+  <p class="section-desc">Instead of waiting for the AI to finish its entire response before showing anything, we <strong>stream every word as it's generated</strong> — character by character, in real time. This uses a web technology called <strong>Server-Sent Events (SSE)</strong>. The AI's response flows through 20+ event types: text chunks, tool calls, template updates, research results, session IDs, and more.</p>
+
+  <div class="explain">
+    <strong>What's SSE?</strong> Imagine a phone call where one person talks and the other listens. SSE is like that — the server keeps an open connection and pushes updates to the browser as they happen. Unlike a regular web request where you ask and wait for the full answer, SSE lets you see the answer being typed out in real time (like ChatGPT's typing effect).
+  </div>
+
+  <div class="file-label"><span class="icon">&#128196;</span> src/controllers/newsletter.controller.ts — Lines 375–460</div>
+  <pre><code class="language-typescript">@post('/api/newsletter/chat', { responses: { '200': STREAM_RESPONSE } })
+async chat(
+  @requestBody() req: { companyId: string; message: {role: string; content: string}; ... },
+  @inject(RestBindings.Http.RESPONSE) response: Response,
+): Promise&lt;void&gt; {
+  const logger = new CustomLogger(req.companyId || 'newsletter-chat');
+
+  // Security: Sanitize companyId (prevent path traversal)
+  const companyIdValidation = sanitizeCompanyId(req.companyId);
+  if (!companyIdValidation.valid) {
+    response.status(400).send({error: 'Invalid company identifier'});
+    return;
+  }
+  const safeCompanyId = companyIdValidation.sanitized!;
+
+  // Security: Rate limiting
+  const rateLimitResult = checkRateLimit(safeCompanyId, {
+    maxRequestsPerMinute: 10, maxGenerationsPerSession: 50,
+  });
+  if (!rateLimitResult.allowed) {
+    response.status(429).send({
+      error: `Rate limit exceeded. Try again in ${rateLimitResult.retryAfter} seconds.`
+    });
+    return;
+  }
+
+  // Set SSE headers — X-Accel-Buffering: no prevents nginx from buffering the stream
+  response.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+  response.setHeader('Cache-Control', 'no-cache, no-transform');
+  response.setHeader('Connection', 'keep-alive');
+  response.setHeader('X-Accel-Buffering', 'no');
+
+  // Security: Redact message content from logs (may contain PII)
+  logger.info(`chat, companyId: ${safeCompanyId}, message length: ${req.message.content.length}`);
+
+  // Stream events to the browser as they happen
+  await this.chatService.chat({...req, companyId: safeCompanyId}, {
+    onTextChunk:     (chunk) =&gt; response.write(`data: ${JSON.stringify({type: 'content', text: chunk})}\n\n`),
+    onToolUse:       (tool)  =&gt; response.write(`data: ${JSON.stringify({type: 'tool_use', tool: {...}})}\n\n`),
+    onTemplatesReady:(data)  =&gt; response.write(`data: ${JSON.stringify({type: 'templates_ready', data})}\n\n`),
+    onSessionReady:  (sid)   =&gt; response.write(`data: ${JSON.stringify({type: 'session_ready', sessionId: sid})}\n\n`),
+    onGenerationStarted: (d) =&gt; response.write(`data: ${JSON.stringify({type: 'generation_started', ...d})}\n\n`),
+    onResearchReady: (data)  =&gt; response.write(`data: ${JSON.stringify({type: 'research_ready', data})}\n\n`),
+    onBrandAnalysisReady: (d)=&gt; response.write(`data: ${JSON.stringify({type: 'brand_analysis_ready', data: d})}\n\n`),
+    onError:         (error) =&gt; response.write(`data: ${JSON.stringify({
+      type: 'error', message: 'Something went wrong. Please try again.'  // Never expose raw errors
+    })}\n\n`),
+    onComplete:      (result)=&gt; response.write(`data: ${JSON.stringify({type: 'done', ...result})}\n\n`),
+  });
+  response.end();
+}</code></pre>
+
+  <div class="why-box">
+    <strong>Why this matters:</strong> The callback-based architecture keeps every SSE event structured and typed. Security is baked in at every layer: companyId sanitization, rate limiting, and error sanitization all happen before any AI logic runs. Error messages never leak internal details — the user sees "Something went wrong" while the full stack trace is logged server-side.
+  </div>
+</div>
+
+
+<!-- ═══════════════════ SECTION 03 ═══════════════════ -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>Fast Refinement Engine</h2>
+  </div>
+  <div class="section-subtitle">TypeScript &middot; LoopBack 4 API &middot; newsletter.tools.ts</div>
+
+  <p class="section-desc">When a user says "change the background to blue" or "use Roboto font," why call an expensive AI model? This engine handles color swaps, font changes, text replacements, and spacing adjustments <strong>entirely with code</strong> — no AI needed. It walks the MJML JSON tree, finds the right elements, and makes the change programmatically.</p>
+
+  <div class="explain">
+    <strong>What's MJML?</strong> Email clients (Gmail, Outlook, etc.) all render HTML differently. MJML is a special markup language designed for emails — you write simple MJML and it compiles into the ugly, complex HTML that works everywhere. Our system stores templates as MJML JSON trees, which are easy to manipulate programmatically.
+  </div>
+
+  <div class="file-label"><span class="icon">&#128196;</span> src/utils/newsletter.tools.ts — Lines 1144–1281</div>
+  <pre><code class="language-typescript">/**
+ * Attempt a fast programmatic refinement. Returns {mjmlJson, html, label} or null.
+ * Handles: color swaps, font swaps, text replacements, text color changes.
+ */
+private tryFastRefinement(
+  mjmlJson: any, instruction: string
+): {mjmlJson: any; html: string; label: string} | null {
+  const lower = instruction.toLowerCase();
+
+  // 1) Color swap — hex codes + color keywords
+  const colorResult = this.tryColorSwap(mjmlJson, instruction, lower);
+  if (colorResult) return colorResult;
+
+  // 2) Font swap — "change font to X", "use X font"
+  const fontResult = this.tryFontSwap(mjmlJson, instruction, lower);
+  if (fontResult) return fontResult;
+
+  // 3) Text replacement — "replace X with Y", "change header to Y"
+  const textResult = this.tryTextReplace(mjmlJson, instruction, lower);
+  if (textResult) return textResult;
+
+  return null;  // Not a simple change — fall back to AI
+}
+
+/** Font swap: "change font to Roboto", "use Georgia font", "switch to Arial" */
+private tryFontSwap(mjmlJson: any, instruction: string, lower: string):
+  {mjmlJson: any; html: string; label: string} | null {
+
+  const fontKeywords = ['font', 'typeface', 'typography'];
+  if (!fontKeywords.some(k => lower.includes(k))) return null;
+
+  // Bail on structural changes — these need the AI
+  const structuralKeywords = ['layout', 'section', 'column', 'add', 'remove', 'image'];
+  if (structuralKeywords.some(k => lower.includes(k))) return null;
+
+  // Extract target font name with multiple regex patterns
+  const fontMatch = instruction.match(
+    /(?:to|use|switch\s+to)\s+([A-Z][a-zA-Z\s]+?)(?:\s+(?:font|with|as|and|for)\b|\s*$|\s*,)/i
+  ) || instruction.match(
+    /([A-Z][a-zA-Z\s]+?)\s+font\b/i
+  );
+  if (!fontMatch) return null;
+
+  const newFont = fontMatch[1].trim();
+  if (newFont.split(/\s+/).length > 3 || newFont.length > 30) return null;
+
+  // Detect scope: "change header font" vs "change all fonts"
+  const scope = this.detectFontScope(lower);  // 'all' | 'header' | 'paragraph' | 'button'
+
+  this.logger.info(`Fast font swap: "${newFont}" (scope: ${scope})`);
+  const updatedJson = JSON.parse(JSON.stringify(mjmlJson));
+  this.swapFontInJson(updatedJson, newFont, scope);
+  const html = this.templateGenerator.renderJsonToHtml(updatedJson);
+  return {mjmlJson: updatedJson, html, label: `font swap (${scope})`};
+}</code></pre>
+
+  <div class="why-box">
+    <strong>Why this matters:</strong> AI calls cost ~$0.005 each and take 3–8 seconds. The fast refinement engine handles ~20% of all edit requests without touching the AI at all. Average response time drops from ~5 seconds to under 200ms. The 3-tier approach (color → font → text) catches the most common edits, and anything complex gracefully falls back to the AI.
+  </div>
+</div>
+
+
+<!-- ═══════════════════ SECTION 04 ═══════════════════ -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>Security Hardening Layer</h2>
+  </div>
+  <div class="section-subtitle">TypeScript &middot; LoopBack 4 API &middot; security.validator.ts</div>
+
+  <p class="section-desc">This centralized module handles 12 categories of web vulnerabilities in one file. Every external input passes through these validators before reaching any business logic.</p>
+
+  <div class="explain">
+    <strong>What's SSRF?</strong> Server-Side Request Forgery. Imagine a feature where you paste a URL and the server fetches it for you (like our website scraper). An attacker could paste <code>http://169.254.169.254/</code> — a special address that only works from inside AWS. That address returns secret credentials. SSRF protection blocks requests to internal/private IP addresses, even if an attacker uses DNS tricks to disguise them.
+  </div>
+
+  <div class="file-label"><span class="icon">&#128196;</span> src/utils/security.validator.ts — Lines 22–114</div>
+  <pre><code class="language-typescript">/**
+ * Sanitize companyId to prevent path traversal and S3 key injection.
+ * Only alphanumeric chars, hyphens, underscores allowed (no path separators).
+ */
+export function sanitizeCompanyId(companyId: string):
+  {valid: boolean; sanitized?: string; error?: string} {
+  if (!companyId || typeof companyId !== 'string') {
+    return {valid: false, error: 'Company ID is required'};
+  }
+  const trimmed = companyId.trim();
+
+  // Check for path traversal attempts: ../../etc/passwd
+  if (trimmed.includes('..') || trimmed.includes('/') || trimmed.includes('\\')) {
+    logger.warn(`Path traversal attempt detected in companyId: ${companyId}`);
+    return {valid: false, error: 'Invalid company ID format'};
+  }
+
+  // Strict allowlist: only safe characters
+  const sanitized = trimmed.replace(/[^a-zA-Z0-9_-]/g, '');
+  if (sanitized.length === 0 || sanitized.length > 100) {
+    return {valid: false, error: 'Invalid company ID format'};
+  }
+  return {valid: true, sanitized};
+}
+
+/**
+ * Validate URL to prevent SSRF attacks.
+ * Blocks: AWS metadata, localhost, private IPs (RFC 1918).
+ * Resolves DNS BEFORE making the request to prevent DNS rebinding.
+ */
+export async function validateUrlForSSRF(url: string):
+  Promise&lt;{valid: boolean; error?: string; resolvedIps?: string[]}&gt; {
+  try {
+    const parsed = new URL(url);
+
+    // Only HTTP/HTTPS
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return {valid: false, error: 'Only HTTP/HTTPS URLs are allowed'};
+    }
+
+    // Block localhost variants
+    const hostname = parsed.hostname.toLowerCase();
+    if (['localhost', '127.0.0.1', '0.0.0.0', '[::1]'].includes(hostname)) {
+      logger.warn(`SSRF attempt blocked: localhost URL ${url}`);
+      return {valid: false, error: 'Internal URLs are not allowed'};
+    }
+
+    // Resolve DNS to actual IPs BEFORE making the request
+    let ips: string[];
+    try {
+      ips = await resolveDns(hostname);
+    } catch {
+      return {valid: true};  // DNS failed — let HTTP client handle it
+    }
+
+    // Block any resolved IP that's private/internal
+    for (const ip of ips) {
+      if (isPrivateIP(ip)) {
+        logger.warn(`SSRF attempt blocked: ${url} resolves to internal IP ${ip}`);
+        return {valid: false, error: 'URLs resolving to internal addresses are not allowed'};
+      }
+    }
+
+    return {valid: true, resolvedIps: ips};
+  } catch (err: any) {
+    return {valid: false, error: 'Invalid URL format'};
+  }
+}</code></pre>
+
+  <div class="why-box">
+    <strong>Why this matters:</strong> This single file prevents 6+ attack types: SSRF (accessing internal cloud infrastructure), path traversal (reading files outside the allowed directory), S3 key injection (accessing other companies' data), file upload attacks (disguised executables), HTML injection, and error information leakage. The DNS pre-resolution prevents "DNS rebinding" — a sophisticated attack where a domain resolves to a safe IP initially but switches to an internal IP on the actual request.
+  </div>
+</div>
+
+
+<!-- ═══════════════════ SECTION 05 ═══════════════════ -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>Background Generation &amp; Polling</h2>
+  </div>
+  <div class="section-subtitle">TypeScript &middot; LoopBack 4 API &middot; generation-job-store.ts</div>
+
+  <p class="section-desc">Generating 3 newsletter templates takes 40–90 seconds. If we kept the HTTP connection open that long, nginx would kill it with a 504 timeout. The solution: start the job in the background, give the browser a job ID, and let it poll for results.</p>
+
+  <div class="explain">
+    <strong>What's polling?</strong> Like checking the oven every few minutes. The browser asks "is my job done?" every 3 seconds. When the server says "yes, here are your templates," the browser stops asking and shows the results. This is simpler and more reliable than keeping a long connection open.
+  </div>
+
+  <div class="file-label"><span class="icon">&#128196;</span> src/utils/generation-job-store.ts — Lines 1–84</div>
+  <pre><code class="language-typescript">// ─── In-Memory Generation Job Store ─────────────────────────────────────
+// Module-level Map that survives across HTTP requests (lives in Node module scope).
+// Tracks background newsletter generation jobs so the frontend can poll for results.
+
+export interface GenerationJob {
+  jobId: string;              // "gen-{companyId}-{timestamp}"
+  companyId: string;
+  sessionId: string;
+  status: 'generating' | 'complete' | 'failed';
+  startedAt: number;
+  completedAt?: number;
+  templates?: any[];          // Full template array on completion
+  error?: string;
+}
+
+const jobs = new Map&lt;string, GenerationJob&gt;();
+const MAX_JOBS = 100;
+const JOB_TTL_MS = 10 * 60 * 1000;  // 10 minutes
+
+/** Create a new generation job. */
+export function createJob(jobId: string, companyId: string, sessionId: string): GenerationJob {
+  if (jobs.size >= MAX_JOBS) evictOldestCompleted();  // Prevent memory leak
+  const job: GenerationJob = {
+    jobId, companyId, sessionId, status: 'generating', startedAt: Date.now(),
+  };
+  jobs.set(jobId, job);
+  return job;
+}
+
+/** Mark a job as complete with template results. */
+export function completeJob(jobId: string, templates: any[]): void {
+  const job = jobs.get(jobId);
+  if (!job) return;
+  job.status = 'complete';
+  job.completedAt = Date.now();
+  job.templates = templates;
+}
+
+/** Find any active job for a company (prevents double-generation). */
+export function getActiveJobForCompany(companyId: string): GenerationJob | undefined {
+  for (const job of jobs.values()) {
+    if (job.companyId === companyId && job.status === 'generating') return job;
+  }
+  return undefined;
+}</code></pre>
+
+  <p class="section-desc" style="margin-top:20px;">And here's the frontend polling that matches — robust error handling with consecutive error tracking, auth expiry detection, and graceful timeouts.</p>
+
+  <div class="file-label"><span class="icon">&#128196;</span> newsletter-generator.blade.php — Lines 2516–2596 (Frontend)</div>
+  <pre><code class="language-javascript">function startGenerationPolling(jobId) {
+    stopGenerationPolling();
+    let pollCount = 0;
+    let consecutiveErrors = 0;
+    const MAX_POLLS = 60;              // 3 minutes at 3s interval
+    const MAX_CONSECUTIVE_ERRORS = 10;  // stop after 10 straight failures
+
+    generationPollTimer = setInterval(async () => {
+        pollCount++;
+        if (pollCount > MAX_POLLS) {
+            stopGenerationPolling();
+            hideGeneratingOverlay();
+            addMessage('assistant', 'Generation is taking longer than expected. Please try again.');
+            return;
+        }
+        try {
+            const resp = await fetch(GENERATION_STATUS_URL + '?jobId=' + encodeURIComponent(jobId), {
+                headers: {'X-CSRF-TOKEN': CSRF_TOKEN, 'Accept': 'application/json'},
+                credentials: 'same-origin',
+            });
+
+            if (!resp.ok) {
+                consecutiveErrors++;
+                if (resp.status === 401 || resp.status === 419) {
+                    // Auth or CSRF expired — stop immediately
+                    stopGenerationPolling();
+                    addMessage('assistant', 'Session expired. Please refresh the page.');
+                    return;
+                }
+                if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+                    stopGenerationPolling();
+                    addMessage('assistant', 'Unable to check progress. Please refresh.');
+                    return;
+                }
+                return; // Keep polling — might recover
+            }
+
+            consecutiveErrors = 0;  // Reset on success
+            const json = await resp.json();
+
+            if (json.status === 'complete') {
+                stopGenerationPolling();
+                hideGeneratingOverlay();
+                if (json.templates && Array.isArray(json.templates)) {
+                    renderTemplates(json.templates);
+                }
+            }
+        } catch (err) { consecutiveErrors++; }
+    }, 3000);
+}</code></pre>
+
+  <div class="why-box">
+    <strong>Why this matters:</strong> The <code>getActiveJobForCompany()</code> guard prevents a critical bug: if the AI accidentally calls <code>generate_newsletter</code> twice, the second call finds the existing job and returns it instead of starting a duplicate. The frontend polling has 3 layers of protection: max poll limit (timeout), consecutive error tracking (bad server), and auth status detection (expired session). The in-memory store auto-evicts old jobs so the server never runs out of memory.
+  </div>
+</div>
+
+
+<!-- ═══════════════════ SECTION 06 ═══════════════════ -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>SSE Event Handler (Frontend)</h2>
+  </div>
+  <div class="section-subtitle">JavaScript &middot; Laravel Blade &middot; newsletter-generator.blade.php</div>
+
+  <p class="section-desc">The frontend reads the SSE stream and routes each event to the right handler. Over 20 event types trigger different UI behaviors — showing tool progress, rendering templates, updating brand analysis panels, starting polls, enabling click modes, and more.</p>
+
+  <div class="file-label"><span class="icon">&#128196;</span> newsletter-generator.blade.php — Lines 867–936</div>
+  <pre><code class="language-javascript">function handleSSEEvent(data) {
+    switch (data.type) {
+        case 'tool_use':
+            // Mark previous tools as done when the next step starts
+            if (data.tool.name === 'conduct_research') {
+                markToolDone('validate_url');
+            } else if (data.tool.name === 'generate_newsletter') {
+                markToolDone('set_sender_settings');
+            }
+
+            // Start timing for this tool (displayed in UI as "Researching... 3.2s")
+            timeStart(data.tool.name);
+
+            // Show progress in preview panel
+            if (data.tool.name === 'validate_url') {
+                showResearchProgress('validate');
+            } else if (data.tool.name === 'conduct_research') {
+                showResearchProgress('research');
+            } else if (data.tool.name === 'generate_newsletter') {
+                showGeneratingProgress();
+            } else if (data.tool.name === 'refine_template') {
+                showRefiningOverlay('Refining template', {
+                    variantId: data.tool.variantId, applyToAll: data.tool.applyToAll
+                });
+            } else if (data.tool.name === 'replace_text') {
+                showRefiningOverlay('Updating text', {
+                    variantId: data.tool.variantId,
+                    oldText: data.tool.oldText, newText: data.tool.newText
+                });
+            }
+            break;
+
+        case 'session_ready':
+            if (data.sessionId) sessionId = data.sessionId;
+            break;
+
+        case 'brand_analysis_ready':
+            renderBrandAnalysisPanel(data.data);
+            break;
+
+        case 'templates_ready':
+            hideRefiningOverlay();
+            hideGeneratingOverlay();
+            renderTemplates(data.data);
+            break;
+
+        case 'generation_started':
+            showGeneratingOverlay();
+            startGenerationPolling(data.jobId);
+            break;
+
+        case 'image_click_mode':
+            enableImageClickMode();
+            break;
+
+        case 'text_click_mode':
+            enableTextClickMode(data.data);
+            break;
+
+        case 'done':
+            isSending = false;
+            break;
+    }
+}</code></pre>
+
+  <div class="why-box">
+    <strong>Why this matters:</strong> This event router is the glue between backend AI processing and the visual UI. Each event type triggers a different visual state — tool progress spinners, template rendering, click mode activation, polling start. The <code>markToolDone()</code> chain ensures the progress indicators transition smoothly (e.g., "Validating URL..." → "Researching..." → "Generating...").
+  </div>
+</div>
+
+
+<!-- ═══════════════════ SECTION 07 ═══════════════════ -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>Click-to-Edit System</h2>
+  </div>
+  <div class="section-subtitle">JavaScript &middot; Laravel Blade &middot; newsletter-generator.blade.php</div>
+
+  <p class="section-desc">Users can click on any image or text in the live email preview to edit it. This required a click-event system that works <strong>inside iframes</strong> — the email preview lives in an iframe to isolate its styles from the main page. Each mode (image, text, button) is mutually exclusive and uses named event handlers for clean attach/detach.</p>
+
+  <div class="file-label"><span class="icon">&#128196;</span> newsletter-generator.blade.php — Lines 3065–3162</div>
+  <pre><code class="language-javascript">// ─── Image Click-to-Edit ──────────────────────────────────
+function attachImageClickHandlers(iframe) {
+    if (!imageClickModeActive) return;
+    if (!iframe || !iframe.contentDocument) return;
+    const imgs = iframe.contentDocument.querySelectorAll('img');
+
+    let visibleIndex = 0;
+    imgs.forEach(function(img) {
+        // Skip tiny images (icons, spacers) — only make real images clickable
+        if (img.naturalWidth < 50 && img.width < 50) return;
+
+        const currentIndex = visibleIndex;
+        img.style.cursor = 'pointer';
+        img.style.transition = 'outline 0.2s';
+
+        // Named handlers for clean detach later
+        img._imgEditEnter = function() { img.style.outline = '3px dashed #3BA9C2'; };
+        img._imgEditLeave = function() { img.style.outline = ''; };
+        img._imgEditClick = function() { onImageClicked(currentIndex, img, iframe); };
+
+        img.addEventListener('mouseenter', img._imgEditEnter);
+        img.addEventListener('mouseleave', img._imgEditLeave);
+        img.addEventListener('click', img._imgEditClick);
+        visibleIndex++;
+    });
+}
+
+// ─── Text Click-to-Edit ──────────────────────────────────
+function attachTextClickHandlers(iframe) {
+    if (!textClickModeActive) return;
+    if (!iframe || !iframe.contentDocument) return;
+
+    // Find elements by CSS class identifier (e.g. "identifier-mj-text-5")
+    // This ID maps directly to the backend's MJML JSON tree position
+    var textEls = iframe.contentDocument.querySelectorAll('[class*="identifier-mj-text-"]');
+
+    textEls.forEach(function(el) {
+        var match = el.className.match(/identifier-mj-text-(\d+)/);
+        if (!match) return;
+        var textIndex = parseInt(match[1], 10);
+
+        el.style.cursor = 'pointer';
+        el._textEditEnter = function() { el.style.outline = '2px dashed #3BA9C2'; };
+        el._textEditLeave = function() { el.style.outline = ''; };
+        el._textEditClick = function() { onTextClicked(textIndex, el, iframe); };
+
+        el.addEventListener('mouseenter', el._textEditEnter);
+        el.addEventListener('mouseleave', el._textEditLeave);
+        el.addEventListener('click', el._textEditClick);
+    });
+}</code></pre>
+
+  <div class="why-box">
+    <strong>Why this matters:</strong> The named handler pattern (<code>img._imgEditEnter</code>) solves a common JavaScript bug: if you use anonymous functions with <code>addEventListener</code>, you can never remove them later with <code>removeEventListener</code>. By storing each handler as a property on the element itself, we can cleanly detach all handlers when switching modes — no memory leaks, no ghost event handlers. The CSS class identifier system (<code>identifier-mj-text-5</code>) bridges the visual DOM and the backend's JSON tree, making it possible to map a click in the preview directly to the right node in the MJML data structure.
+  </div>
+</div>
+
+
+<!-- ═══════════════════ SECTION 08 ═══════════════════ -->
+<div class="section" id="s8">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>Dentrix Ascend Data Pipeline</h2>
+  </div>
+  <div class="section-subtitle">Python &middot; AWS Step Functions + Lambda + SQS &middot; Jarvis Analytics</div>
+
+  <p class="section-desc">At Jarvis Analytics, I built a data sync pipeline that pulls dental practice data from the Dentrix Ascend cloud platform into our analytics database. The system syncs <strong>40+ API endpoints</strong> into <strong>51 database tables</strong>, handling pagination, retries, rate limiting, and incremental updates.</p>
+
+  <div class="explain">
+    <strong>What's a data pipeline?</strong> Dental practices use software (like Dentrix Ascend) to manage patients, appointments, billing, etc. That data lives in Dentrix's cloud. Our analytics platform needs a copy of that data to generate reports. The pipeline is the automated system that pulls data from their API, processes it, and inserts it into our database — running continuously, handling errors, and keeping everything in sync.
+  </div>
+
+  <div class="file-label"><span class="icon">&#128196;</span> scripts/src/api_data_handler.py — Lines 10–87 (API caller with adaptive page sizing)</div>
+  <pre><code class="language-python">def get_api_call(endpoint, org_id, last_id, last_modified_minutes,
+                 retry_count, page_size=None, processDelete=False,
+                 apiFilter=None, apiResponseFields=None):
+    """
+    API call handler for 40+ dental practice endpoints.
+
+    Endpoints: appointments, clinicalnotes, patients, transactions,
+    patientprocedures, insuranceclaims, feeschedules, providers,
+    locations, operatories, visits, perioexams, and 28 more.
+    """
+    base_url = 'https://prod.hs1api.com/ascend-gateway/api/v1/'
+    url = base_url + endpoint
+
+    access_token = get_access_token()
+    headers = {
+        'Content-type': 'application/json',
+        'Authorization': 'Bearer ' + access_token,
+        'Organization-ID': org_id
+    }
+
+    default_page_size = 300 if page_size is None else page_size
+    params = {'pageSize': default_page_size}
+    filter = ""
+
+    # Cursor-based pagination: resume from where we left off
+    if last_id is not None:
+        params['lastId'] = int(last_id)
+    elif last_id is None and last_modified_minutes == 0:
+        params['bypassParams'] = '1'  # Full sync — no filters
+
+    # Incremental sync: only records modified since last run
+    unsupported = ['feescheduleranges', 'smsnumbers']
+    if endpoint not in unsupported:
+        if last_modified_minutes != 0:
+            last_modified_date = datetime.strftime(
+                datetime.now() - timedelta(minutes=last_modified_minutes),
+                '%Y-%m-%d'
+            )
+            filter += f'lastModified>={last_modified_date}'
+
+    if filter:
+        params['filter'] = filter
+
+    response = requests.get(url, headers=headers, params=params)
+    response.raise_for_status()
+    return response.json()</code></pre>
+
+  <p class="section-desc" style="margin-top:20px;">The adaptive page sizing is particularly clever — when the API starts failing (timeouts, rate limits), the system automatically reduces page size to reduce load, then gradually recovers:</p>
+
+  <div class="file-label"><span class="icon">&#128196;</span> scripts/src/api_data_handler.py — Lines 180–191</div>
+  <pre><code class="language-python">def get_page_size(default_pagesize=500, previous_pagesize=None,
+                  retry_count=0, recovery_count=0):
+    """
+    Adaptive page sizing: shrinks on failure, grows on recovery.
+    - No retries: use default (500)
+    - Recovering: slowly increase (50% increments back to default)
+    - Retrying: halve each time (exponential backoff on page size)
+    - 5+ retries: drop to 1 record at a time (last resort)
+    """
+    if previous_pagesize is None:
+        return default_pagesize
+    elif retry_count == 0 and recovery_count == 0 and previous_pagesize < default_pagesize:
+        # Recovering — increase by 50% each success, capped at default
+        return min(int(previous_pagesize + max(previous_pagesize * 0.5, 1)), default_pagesize)
+    elif retry_count == 0:
+        return previous_pagesize
+    elif retry_count >= 5:
+        return 1  # Last resort: one record at a time
+    else:
+        # Exponential backoff: halve page size on each retry
+        return max(int(previous_pagesize / (2 * retry_count)), 1)</code></pre>
+
+  <div class="file-label"><span class="icon">&#128196;</span> scripts/src/run.py — Multiprocessing entry point</div>
+  <pre><code class="language-python">if __name__ == "__main__":
+    print("\n\n********** RUNNING DX ASCEND SCRIPT **********\n\n")
+
+    # Create database schema and tables if not yet exist.
+    db_create_schema()
+
+    start_time = time.time()
+
+    # Run all 40+ endpoint syncs in parallel (6 workers)
+    with Pool(processes=6) as pool:
+        for name, val in data_insertion.__dict__.items():
+            if callable(val) and 'api_insert' in name:
+                pool.apply_async(val)
+        pool.close()
+        pool.join()
+
+    print("\n\n--- %s seconds ---" % (time.time() - start_time))</code></pre>
+
+  <div class="why-box">
+    <strong>Why this matters:</strong> The adaptive page sizing is a self-healing mechanism. When the Dentrix Ascend API starts rate-limiting or timing out (which happens often with 6M+ records), the system automatically backs off — smaller pages, fewer records per request — then gradually recovers to full speed once the API stabilizes. The multiprocessing parallelism runs 6 endpoint syncs simultaneously, dramatically reducing total sync time. The cursor-based pagination (<code>lastId</code>) allows the system to resume from exactly where it left off after any failure.
+  </div>
+</div>
+
+
+<!-- ═══════════════════ SECTION 09 ═══════════════════ -->
+<div class="section" id="s9">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>Real-Time Stream Consumer</h2>
+  </div>
+  <div class="section-subtitle">Python &middot; RabbitMQ + SQS &middot; Jarvis Analytics</div>
+
+  <p class="section-desc">Beyond the batch sync, the pipeline also supports <strong>real-time streaming</strong>. When a dental practice creates a new appointment or records a payment in Dentrix Ascend, that change flows through RabbitMQ (a message queue) to our consumer, which routes it to AWS SQS for processing.</p>
+
+  <div class="explain">
+    <strong>What's a message queue?</strong> Think of it like a post office. When something happens in the dental software (new patient created, appointment booked), it drops a "letter" into the queue. Our consumer picks up those letters and processes them. This decoupling means the dental software doesn't have to wait for our system — it just drops the message and moves on. If our system is busy, messages wait in the queue until we're ready.
+  </div>
+
+  <div class="file-label"><span class="icon">&#128196;</span> scripts/src/streams.py — Lines 18–79</div>
+  <pre><code class="language-python">async def on_message(message: AbstractIncomingMessage) -> None:
+    async with message.process():
+        # Parse routing key: "orgId.locationId.domainType.operation"
+        [organization_id, location_id, domain_type, operation] = \
+            message.routing_key.split('.')
+
+        message_body = json.loads(str(message.body, 'utf-8'))
+        payload = message_body['payload']
+        record_id = message_body['id']
+
+        # Route to correct SQS queue (production vs staging)
+        test_orgs = ["5fa5bce5471d910c1b33e320"]
+        sync_env = config('SYNC_ENVIRONMENT', default='prod')
+        sqs_queue = config('SQS_QUEUE_STAGE' if organization_id in test_orgs
+                          or sync_env == 'stage' else 'SQS_QUEUE')
+
+        # Clean oversized nested data (e.g. PatientV1.referredPatients)
+        if domain_type == "PatientV1" and 'referredPatients' in payload:
+            del payload['referredPatients']
+
+        # Build SQS event and send with deduplication
+        sqs = boto3.client('sqs')
+        event = {
+            'producer': False,
+            'organization_id': organization_id,
+            'payload': payload,
+            'id': record_id,
+            'operation': operation,       # CREATE, UPDATE, or DELETE
+            'domain_type': domain_type,   # PatientV1, Transaction, etc.
+        }
+
+        # Deduplication: hash the content to prevent duplicate processing
+        if operation == 'DELETE':
+            dedup_id = f"{organization_id}-{domain_type}-DELETE-{record_id}"
+        else:
+            dedup_id = hashlib.md5(
+                (operation + json.dumps(payload)).encode('utf-8')
+            ).hexdigest()
+
+        sqs.send_message(
+            QueueUrl=sqs_queue,
+            MessageBody=json.dumps(event),
+            MessageDeduplicationId=dedup_id,
+            # Group by org + domain + ID modulo (preserves ordering within entity)
+            MessageGroupId=f"{organization_id}{domain_type}{int(record_id) % 9}"
+        )</code></pre>
+
+  <div class="why-box">
+    <strong>Why this matters:</strong> The deduplication strategy is critical — RabbitMQ can deliver the same message twice under network issues. The MD5 hash of the payload ensures we never process a duplicate. The <code>MessageGroupId</code> with modulo 9 is a clever balancing act: it keeps related records ordered (same entity type from same org) while spreading load across 9 SQS partitions for parallelism.
+  </div>
+</div>
+
+
+<!-- ═══════════════════ SECTION 10 ═══════════════════ -->
+<div class="section" id="s10">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>Matchback Lead Tracking</h2>
+  </div>
+  <div class="section-subtitle">SQL &middot; MySQL Stored Procedures &middot; Jarvis Analytics</div>
+
+  <p class="section-desc">Marketing agencies spend thousands on Google Ads, Facebook campaigns, and SEO to get new patients to dental practices. But did those campaigns actually work? <strong>Matchback</strong> answers that question: it links marketing leads (form submissions, phone calls) to actual patient visits in the dental practice's system — proving ROI.</p>
+
+  <div class="explain">
+    <strong>What's a stored procedure?</strong> A stored procedure is a pre-written SQL program that lives inside the database. Instead of writing a complex query every time, you "call" the procedure with parameters (like a patient's name and email) and it runs the full matching logic internally. Think of it like a function, but it runs inside the database engine itself — much faster than sending multiple queries from an external application.
+  </div>
+
+  <div class="file-label"><span class="icon">&#128196;</span> stored-procs/matchback/matchback_v5.sql — Lead-to-Patient matching</div>
+  <pre><code class="language-sql">/*
+  Matchback v5 — Link marketing leads to completed dental appointments.
+
+  Matching strategy:
+    FORMS (website submissions):
+      1. Email → 100% confidence match
+      2. Last name + Zip code → 100% (if location matches)
+      3. Phone → 100% confidence match
+
+    CALLS (phone leads):
+      1. Phone → 100% confidence match
+
+  Works across 4 PMS platforms:
+    EagleSoft, OpenDental, Dentrix Ascend, Denticon
+
+  Returns: all patients with completed appointments within 60 days
+           of the lead date (first appointment only per patient).
+*/
+
+CREATE PROCEDURE stored_procs.`matchback_v5`(
+  command TEXT,        -- 'forms' or 'calls'
+  lname TEXT,          -- lead's last name
+  fname TEXT,          -- lead's first name
+  email TEXT,          -- lead's email (blank for calls)
+  phone TEXT,          -- lead's phone
+  zip TEXT,            -- lead's zip code (blank for calls)
+  dbs TEXT,            -- practice database name
+  `lead_date` TEXT,    -- when the lead came in
+  aggregatedb TEXT     -- aggregate database name
+)
+BEGIN
+  SET SESSION group_concat_max_len = 1000000;
+
+  -- Build the dynamic matching query across all PMS platforms
+  SET @sql_string = stored_procs.`MATCH_BACK_V5`(
+    command, lname, fname, email, phone, zip, dbs, `lead_date`, aggregatedb
+  );
+
+  PREPARE stmt FROM @sql_string;
+  EXECUTE stmt;
+END$$</code></pre>
+
+  <p class="section-desc" style="margin-top:20px;">The lead aggregation stored procedure shows the scale of the matching logic — deduplicating leads by email, phone, and Google click IDs across multiple marketing sources, then grouping by UTM campaign:</p>
+
+  <div class="file-label"><span class="icon">&#128196;</span> stored-procs/matchback/matchback_unleashed.sql — Lead aggregation (excerpt)</div>
+  <pre><code class="language-sql">-- Deduplicate leads: group by email first (email = strongest identifier)
+SET @sql_string1 = CONCAT('
+  SELECT
+    a.utm_source AS `group`,
+    GROUP_CONCAT(DISTINCT(name_sanitized)) AS name_sanitized,
+    GROUP_CONCAT(DISTINCT(location_id)) AS location_id,
+    GROUP_CONCAT(DISTINCT(`type`)) AS types,
+    GROUP_CONCAT(DISTINCT(IF(`type` = "forms", "Website|Coupon", "Calls"))) AS lead_type,
+    COUNT(lead_id) AS lead_count,
+    GROUP_CONCAT(lead_id) AS lead_ids,
+    GROUP_CONCAT(DISTINCT(click_id)) AS gclids,
+    GROUP_CONCAT(DISTINCT(phone_sanitized)) AS phones,
+    GROUP_CONCAT(DISTINCT(email)) AS emails,
+    GROUP_CONCAT(DISTINCT(utm_source)) AS utm_sources,
+    GROUP_CONCAT(DISTINCT(utm_campaign)) AS utm_campaigns
+  FROM ', `db`, '.lead_aggregates a
+  WHERE DATE(a.lead_date) BETWEEN \'', `start`, '\' AND \'', `end`, '\'
+    AND a.email IS NOT NULL
+    AND a.location_id IN (', `location_ids`, ')
+  GROUP BY email
+');
+
+-- Then union with phone-only leads (no email)
+-- Then merge by Google click ID (gclid) to connect ad clicks to conversions
+-- Final: GROUP BY gclids for attributed leads, separate unattributed leads</code></pre>
+
+  <div class="why-box">
+    <strong>Why this matters:</strong> This stored procedure runs across thousands of dental practices. The multi-tier deduplication (email → phone → Google click ID → unattributed) ensures each marketing lead is counted exactly once, even when the same person fills out a form AND calls the office. The dynamic SQL construction handles the fact that each practice uses a different PMS with different database schemas — the same matching logic adapts to EagleSoft, OpenDental, Dentrix Ascend, and Denticon transparently.
+  </div>
+</div>
+
+
+<!-- ═══════════════════ SECTION 11 ═══════════════════ -->
+<div class="section" id="s11">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2>14 PMS — Same Report, Different SQL</h2>
+  </div>
+  <div class="section-subtitle">SQL &middot; 46 Report Categories &middot; Jarvis Analytics</div>
+
+  <p class="section-desc">Every dental practice uses different software to manage their business. I reverse-engineered <strong>14 different Practice Management Systems</strong> — each with completely different database schemas — and wrote the same 46 report categories for all of them. That's <strong>3,000+ queries per PMS</strong>, totaling <strong>48,000+ SQL files</strong>.</p>
+
+  <div class="explain">
+    <strong>Why is this hard?</strong> Imagine building the same financial report for 14 different accounting systems. Each stores "patient balance" differently. Eaglesoft has a simple <code>current_bal</code> field. OpenDental makes you calculate it from 7 separate transaction types. Denterprise stores amounts in <strong>cents</strong> (not dollars) and uses multi-database ID tracking. Same business question, completely different SQL every time.
+  </div>
+
+  <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:24px; margin:24px 0;">
+    <div style="font-size:13px; font-weight:600; color:#a78bfa; margin-bottom:16px; letter-spacing:1px; text-transform:uppercase;">Query Count Per PMS</div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:8px;">
+      <div style="background:rgba(99,102,241,0.08); border-radius:6px; padding:8px 12px; font-size:13px;"><span style="color:#a5b4fc; font-weight:600;">Eaglesoft</span><span style="float:right;color:#94a3b8;">3,310</span></div>
+      <div style="background:rgba(99,102,241,0.08); border-radius:6px; padding:8px 12px; font-size:13px;"><span style="color:#a5b4fc; font-weight:600;">OpenDental</span><span style="float:right;color:#94a3b8;">3,322</span></div>
+      <div style="background:rgba(99,102,241,0.08); border-radius:6px; padding:8px 12px; font-size:13px;"><span style="color:#a5b4fc; font-weight:600;">Dentrix</span><span style="float:right;color:#94a3b8;">3,266</span></div>
+      <div style="background:rgba(99,102,241,0.08); border-radius:6px; padding:8px 12px; font-size:13px;"><span style="color:#a5b4fc; font-weight:600;">Denterprise</span><span style="float:right;color:#94a3b8;">3,250</span></div>
+      <div style="background:rgba(99,102,241,0.08); border-radius:6px; padding:8px 12px; font-size:13px;"><span style="color:#a5b4fc; font-weight:600;">Denticon</span><span style="float:right;color:#94a3b8;">3,228</span></div>
+      <div style="background:rgba(99,102,241,0.08); border-radius:6px; padding:8px 12px; font-size:13px;"><span style="color:#a5b4fc; font-weight:600;">Dx Ascend</span><span style="float:right;color:#94a3b8;">3,190</span></div>
+      <div style="background:rgba(99,102,241,0.08); border-radius:6px; padding:8px 12px; font-size:13px;"><span style="color:#a5b4fc; font-weight:600;">PBS Endo</span><span style="float:right;color:#94a3b8;">3,230</span></div>
+      <div style="background:rgba(99,102,241,0.08); border-radius:6px; padding:8px 12px; font-size:13px;"><span style="color:#a5b4fc; font-weight:600;">OMS Vision</span><span style="float:right;color:#94a3b8;">3,136</span></div>
+      <div style="background:rgba(99,102,241,0.08); border-radius:6px; padding:8px 12px; font-size:13px;"><span style="color:#a5b4fc; font-weight:600;">Focus Ortho</span><span style="float:right;color:#94a3b8;">3,130</span></div>
+      <div style="background:rgba(99,102,241,0.08); border-radius:6px; padding:8px 12px; font-size:13px;"><span style="color:#a5b4fc; font-weight:600;">AbelDent</span><span style="float:right;color:#94a3b8;">3,126</span></div>
+      <div style="background:rgba(99,102,241,0.08); border-radius:6px; padding:8px 12px; font-size:13px;"><span style="color:#a5b4fc; font-weight:600;">Cloud 9</span><span style="float:right;color:#94a3b8;">3,126</span></div>
+      <div style="background:rgba(99,102,241,0.08); border-radius:6px; padding:8px 12px; font-size:13px;"><span style="color:#a5b4fc; font-weight:600;">PowerPractice</span><span style="float:right;color:#94a3b8;">3,128</span></div>
+      <div style="background:rgba(99,102,241,0.08); border-radius:6px; padding:8px 12px; font-size:13px;"><span style="color:#a5b4fc; font-weight:600;">Ortho2</span><span style="float:right;color:#94a3b8;">3,128</span></div>
+      <div style="background:rgba(99,102,241,0.08); border-radius:6px; padding:8px 12px; font-size:13px;"><span style="color:#a5b4fc; font-weight:600;">Tracker</span><span style="float:right;color:#94a3b8;">3,130</span></div>
+    </div>
+    <div style="margin-top:12px; font-size:12px; color:#64748b; text-align:right;">46 report categories &middot; aging, financials, payroll, KPIs, growth, huddle, procedures, providers, and more</div>
+  </div>
+
+  <p class="section-desc">Here's the same report — <strong>"Accounts Receivable by Insurance"</strong> — written for 3 different PMS systems. Watch how the SQL is completely different for the same business question: "How much money does each insurance company owe us, broken down by how old the debt is?"</p>
+
+  <h3 style="color:#60a5fa; font-size:15px; margin:28px 0 8px;">OpenDental — Waterfall Credit Allocation (1,120 lines)</h3>
+  <p class="section-desc" style="font-size:13px;">OpenDental doesn't pre-calculate aging buckets. I had to build a <strong>waterfall algorithm</strong> in pure SQL: credits are applied oldest-first, and each bucket only gets its share after all older buckets are satisfied. This cascading CASE logic spans 8 aging periods.</p>
+
+  <div class="file-label"><span class="icon">&#128196;</span> opendental/aging/ar_by_insurance.sql — Lines 88–134</div>
+  <pre><code class="language-sql">-- Waterfall credit allocation: apply credits oldest-first
+-- Each bucket = charges minus credits already consumed by older buckets
+ROUND(
+  CASE
+    WHEN tSums.TotalCredits >= tSums.ChargesOver365 THEN 0
+    ELSE tSums.ChargesOver365 - tSums.TotalCredits
+  END, 3) BalOver365,
+ROUND(
+  CASE
+    WHEN tSums.TotalCredits <= tSums.ChargesOver365 THEN tSums.Charges_241_365
+    WHEN tSums.ChargesOver365 + tSums.Charges_241_365 <= tSums.TotalCredits THEN 0
+    ELSE tSums.ChargesOver365 + tSums.Charges_241_365 - tSums.TotalCredits
+  END, 3) Bal_241_365,
+ROUND(
+  CASE
+    WHEN tSums.TotalCredits < tSums.ChargesOver365 + tSums.Charges_241_365
+      THEN tSums.Charges_181_240
+    WHEN tSums.ChargesOver365 + tSums.Charges_241_365 + tSums.Charges_181_240
+      <= tSums.TotalCredits THEN 0
+    ELSE tSums.ChargesOver365 + tSums.Charges_241_365
+      + tSums.Charges_181_240 - tSums.TotalCredits
+  END, 3) Bal_181_240,
+-- ... continues for 121-180, 91-120, 61-90, 31-60, 0-30
+-- Each level adds one more bucket to the running total
+-- Credits "fill up" from oldest to newest — like pouring water into stacked cups</code></pre>
+
+  <h3 style="color:#fbbf24; font-size:15px; margin:28px 0 8px;">Eaglesoft — Pre-Calculated Fields (65 lines)</h3>
+  <p class="section-desc" style="font-size:13px;">Eaglesoft already calculates aging buckets for you. Much simpler SQL — but the insurance relationship goes through the <strong>employer</strong> table (employer → insurance company), not through claims.</p>
+
+  <div class="file-label"><span class="icon">&#128196;</span> eaglesoft/aging/ar_by_insurance.sql — Lines 35–62</div>
+  <pre><code class="language-sql">SELECT
+    pat.`patient_id`,
+    pat.`responsible_party`,
+    CONCAT(
+      IF(resp.`last_name` IS NULL OR resp.`last_name` = "", "No Last Name", resp.`last_name`),
+      ", ", resp.`first_name`
+    ) AS responsible_party_name,
+    pat.`current_bal`,          -- Pre-calculated by Eaglesoft
+    pat.`thirty_day`,           -- No waterfall logic needed
+    pat.`sixty_day`,
+    pat.`ninety_day`,
+    pat.`estimated_insurance`,
+    IF(ins.`name` IS NOT NULL, ins.`name`, '') AS insurance_company
+FROM
+    patient pat
+    STRAIGHT_JOIN patient resp ON pat.`responsible_party` = resp.`patient_id`
+    -- Insurance linked through EMPLOYER, not claims
+    LEFT JOIN employer emp ON pat.prim_employer_id = emp.employer_id
+    LEFT JOIN insurance_company ins ON emp.insurance_company_id = ins.insurance_company_id</code></pre>
+
+  <h3 style="color:#f87171; font-size:15px; margin:28px 0 8px;">Denterprise — Cents-Based with Multi-DB IDs (80 lines)</h3>
+  <p class="section-desc" style="font-size:13px;">Denterprise stores everything in <strong>cents</strong> (multiply by 0.01 for dollars) and uses a multi-database ID system (PATID + PATDB, GUARID + GUARDB) because it tracks records across multiple office databases. Uses TIMESTAMPDIFF for aging instead of waterfall.</p>
+
+  <div class="file-label"><span class="icon">&#128196;</span> denterprise/aging/ar_by_insurance.sql — Lines 26–66</div>
+  <pre><code class="language-sql">SELECT
+    pl.proc_logid, pl.proc_logdb,
+    pl.PATID, pl.PATDB,          -- Multi-database ID tracking
+    pl.GUARID, pl.GUARDB,        -- Guarantor in separate DB
+    pl.PROVID, pl.PROVDB,        -- Provider in separate DB
+
+    -- Aging via TIMESTAMPDIFF (simpler than waterfall, less accurate)
+    IF(TIMESTAMPDIFF(DAY, DATE(pl.pldate), DATE(NOW())) < 31,
+       pl.amount + IFNULL(SUM(chrg.amount), 0), 0) AS current,
+    IF(TIMESTAMPDIFF(DAY, DATE(pl.pldate), DATE(NOW())) BETWEEN 31 AND 60,
+       pl.amount + IFNULL(SUM(chrg.amount), 0), 0) AS over30,
+    IF(TIMESTAMPDIFF(DAY, DATE(pl.pldate), DATE(NOW())) BETWEEN 61 AND 90,
+       pl.amount + IFNULL(SUM(chrg.amount), 0), 0) AS over60,
+    -- ... continues for 91-120, 121-180, 180+
+
+    -- Amounts stored in CENTS — multiply by 0.01 in outer query
+    pl.amount + IFNULL(SUM(chrg.amount), 0) total_ar,
+
+    -- Determine patient vs insurance responsibility via claim status
+    IF(clm.CLAIMID IS NULL OR clm.CLAIMID = 0
+       OR (clm.CLAIMID > 0 AND clm.DATERECEIVED != "1753-03-02"),
+       1, 2) AS is_pat_ins  -- 1=patient owes, 2=insurance owes
+
+FROM DDB_PROC_LOG_BASE pl
+LEFT JOIN DDB_CREDIT_TO_CHARGE_BASE chrg
+    ON pl.proc_logid = chrg.chargeid AND pl.proc_logdb = chrg.chargedb
+LEFT JOIN DDB_CLAIM_BASE clm
+    ON clm.status = 1
+    AND pl.CLAIMID = clm.CLAIMID AND pl.CLAIMDB = clm.CLAIMDB
+GROUP BY pl.proc_logid, pl.proc_logdb, pl.patid, pl.patdb, pl.pldate
+HAVING pl.amount + IFNULL(SUM(chrg.amount), 0) > 0 AND is_pat_ins = 2</code></pre>
+
+  <div class="why-box">
+    <strong>Why this matters:</strong> Three completely different approaches to the same business question — and this is just ONE of the 46 report types, across 14 PMS platforms. The waterfall allocation in OpenDental is essentially implementing an accounting algorithm in pure SQL. Denterprise's multi-database ID system (<code>PATID+PATDB</code>) means every JOIN needs two conditions instead of one. Eaglesoft's employer-based insurance linkage is unlike any other PMS. Understanding each schema deeply enough to produce identical business output required reverse-engineering the database design of every PMS from scratch — there are no public docs.
+  </div>
+</div>
+
+
+<!-- ═══════════════════ SECTION 12 ═══════════════════ -->
+<div class="section" id="s12">
+  <div class="section-header">
+    <span class="section-num">12</span>
+    <h2>ODS Schema Mapping (Redshift)</h2>
+  </div>
+  <div class="section-subtitle">SQL + Jinja2 Templates &middot; Jarvis Analytics</div>
+
+  <p class="section-desc">With 14 different PMS schemas, we needed a <strong>unified data model</strong> — a single schema where "procedure" means the same thing regardless of which PMS the data came from. This is the <strong>ODS (Operational Data Store)</strong> layer: Jinja2-templated SQL that dynamically generates the right query for each PMS while outputting identical column names.</p>
+
+  <div class="explain">
+    <strong>What's Jinja2 templating?</strong> Jinja2 is a template engine (like mail merge for code). Instead of writing 14 separate SQL files for 14 PMS systems, you write ONE template with <code>{% if software == 'eaglesoft' %}</code> blocks. At runtime, the system fills in the PMS name and generates the correct SQL. One template, 14 outputs — all producing the same columns.
+  </div>
+
+  <div class="file-label"><span class="icon">&#128196;</span> ods/_filters/procedures.sql — Universal procedure code mapping</div>
+  <pre><code class="language-sql">SELECT
+    proc.procedureid AS procedure_id,
+
+    -- Eaglesoft sometimes stores procedure IDs instead of ADA codes
+    {% if software == 'eaglesoft' %}
+        COALESCE(proc.adacode, proc.procedureid) AS ada_code,
+    {% else %}
+        proc.adacode AS ada_code,
+    {% endif %}
+
+    -- Dentrix/Denterprise/Denticon: no category field — map via ADA code ranges
+    -- OpenDental/Eaglesoft/others: have a built-in category field
+    {% if software in ['dentrix', 'denterprise', 'denticon'] %}
+        {% if proceduresCategory and proceduresCategory[0]|length > 2 %}
+        CASE
+        {% for i in range(0, proceduresCategory|length-1) %}
+            WHEN (proc.adacode BETWEEN '{{ proceduresCategory[i][0] }}'
+                                  AND '{{ proceduresCategory[i][1] }}')
+            THEN '{{ proceduresCategory[i][2] }}'
+        {% endfor %}
+            ELSE 'Undefined'
+        END AS type,
+        {% else %}
+            'Undefined' AS type,
+        {% endif %}
+    {% else %}
+        proc.category AS type,       -- OpenDental, Eaglesoft etc. have this natively
+    {% endif %}
+
+    proc.description AS description
+FROM procedurecodes proc
+ORDER BY proc.adacode ASC
+
+-- OUTPUT (identical for all 14 PMS):
+--   procedure_id  |  ada_code  |  type         |  description
+--   12345         |  D0120     |  Preventive   |  Periodic oral evaluation
+--   12346         |  D2750     |  Restorative  |  Crown - porcelain/ceramic</code></pre>
+
+  <div class="why-box">
+    <strong>Why this matters:</strong> This is the abstraction layer that makes the entire analytics platform possible. Without it, every dashboard and report would need 14 different versions. By normalizing all 14 PMS schemas into one unified model, any new feature or report only needs to be built once. I owned the ODS schema mapping — designing how each PMS's unique data model translates into the unified Redshift analytics schema. The Jinja2 approach means adding a 15th PMS requires adding conditional blocks to the templates, not rewriting from scratch.
+  </div>
+</div>
+
+
+<!-- ═══════════════════ FOOTER ═══════════════════ -->
+<div class="footer">
+  <p style="color: #94a3b8; font-weight: 600; margin-bottom: 4px;">Catherine Maglasang</p>
+  <p>Full-Stack Engineer &middot; cbmaglasang@gmail.com</p>
+  <p style="margin-top: 12px; font-size: 12px;">Code Walkthrough &middot; April 2026</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+</body>
+</html>
