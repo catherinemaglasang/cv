@@ -1,0 +1,67 @@
+---
+interface Props {
+  title: string;
+  company: string;
+  dateRange: string;
+  highlights: string[];
+}
+
+const { title, company, dateRange, highlights } = Astro.props;
+---
+
+<div class="job">
+  <div class="job-row">
+    <span class="job-title">{title}</span>
+    <span class="job-date">{dateRange}</span>
+  </div>
+  <div class="job-company">{company}</div>
+  <ul>
+    {highlights.map(item => (
+      <li set:html={item} />
+    ))}
+  </ul>
+</div>
+
+<style>
+  .job { margin-bottom: 13px; }
+  .job:last-child { margin-bottom: 0; }
+
+  .job-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .job-title {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+
+  .job-date {
+    font-size: 7.5pt;
+    color: #888;
+    white-space: nowrap;
+  }
+
+  .job-company {
+    font-size: 8.5pt;
+    color: #555;
+    margin-bottom: 3px;
+  }
+
+  .job ul {
+    padding-left: 14px;
+  }
+
+  .job li {
+    font-size: 8pt;
+    color: #333;
+    margin-bottom: 2px;
+    line-height: 1.5;
+  }
+
+  .job li :global(strong) {
+    color: #1a1a1a;
+  }
+</style>
