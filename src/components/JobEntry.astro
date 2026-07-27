@@ -3,10 +3,12 @@ interface Props {
   title: string;
   company: string;
   dateRange: string;
+  tech?: string;
   highlights: string[];
 }
 
-const { title, company, dateRange, highlights } = Astro.props;
+const { title, company, dateRange, tech, highlights } = Astro.props;
+const techItems = tech ? tech.split(',').map(t => t.trim()) : [];
 ---
 
 <div class="job">
@@ -15,6 +17,11 @@ const { title, company, dateRange, highlights } = Astro.props;
     <span class="job-date">{dateRange}</span>
   </div>
   <div class="job-company">{company}</div>
+  {techItems.length > 0 && (
+    <div class="job-tech">
+      {techItems.map(t => <span class="tech-pill">{t}</span>)}
+    </div>
+  )}
   <ul>
     {highlights.map(item => (
       <li set:html={item} />
@@ -49,10 +56,26 @@ const { title, company, dateRange, highlights } = Astro.props;
   .job-company {
     font-size: 8.5pt;
     color: #555;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     font-style: italic;
     display: inline-block;
     vertical-align: top;
+  }
+
+  .job-tech {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .tech-pill {
+    font-size: 6.5pt;
+    color: #444;
+    background: #f0f0f0;
+    padding: 1px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
   }
 
   .job ul {
